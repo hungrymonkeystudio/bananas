@@ -48,5 +48,6 @@ func (tm TimerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (tm TimerModel) View() string {
-    return fmt.Sprintf("Time: %d seconds", tm.countdown)
+    timerText := yellow.Render(fmt.Sprintf("Time: %d seconds", tm.countdown))
+    return timerText
 }

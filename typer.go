@@ -8,12 +8,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-var (
-    correctStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("15"))
-    incorrectStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("1"))
-    neutralStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("8"))
-)
-
 var commonWords = []string{
 	"the", "be", "to", "of", "and", "a", "in", "that", "have", "I",
 	"it", "for", "not", "on", "with", "he", "as", "you", "do", "at",
@@ -78,8 +72,8 @@ func (tym TyperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (tym TyperModel) View() string {   
-    prev := correctStyle.Render(tym.words[:tym.idx])
-    next := neutralStyle.Render(tym.words[tym.idx:])
+    prev := white.Render(tym.words[:tym.idx])
+    next := gray.Render(tym.words[tym.idx:])
     return lipgloss.NewStyle().Render(prev + next)
 }
 

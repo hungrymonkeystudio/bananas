@@ -8,7 +8,7 @@ monkeytype in your terminal
 - [x] create wpm and accuracy end screen
 - [x] create separate window for retry
 
-- [ ] fix color coordination
+- [x] fix color coordination
 - [ ] add better typer container
 - [ ] add true analytics
 - [ ] add helper screens

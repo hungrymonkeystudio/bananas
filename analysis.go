@@ -29,7 +29,7 @@ func (am AnalysisModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (am AnalysisModel) View() string {
-    wpmText := fmt.Sprintf("wpm: %d", am.wpm)
-    accuracyText := fmt.Sprintf("acc: %.2f", am.accuracy)
+    wpmText := white.Render(fmt.Sprintf("wpm: %d", am.wpm))
+    accuracyText := white.Render(fmt.Sprintf("acc: %.2f", am.accuracy))
     return wpmText + "\n" + accuracyText 
 }
