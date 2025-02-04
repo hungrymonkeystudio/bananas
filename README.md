@@ -12,3 +12,6 @@ monkeytype in your terminal
 - [ ] add better typer container
 - [ ] add true analytics
 - [ ] add helper screens
+
+- [ ] add cursor
+- [ ] add installation script 
