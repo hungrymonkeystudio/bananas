@@ -1,9 +1,14 @@
 # bananas
 
-typing test in your terminal
+monkeytype in your terminal
 
-- [ ] create interface with timer
-- [ ] create interface with words
-- [ ] create timer interface
-- [ ] create wpm and accuracy end screen
-- [ ] create separate window for retry
+- [x] create interface with timer
+- [x] create interface with words
+- [x] create timer interface
+- [x] create wpm and accuracy end screen
+- [x] create separate window for retry
+
+- [ ] fix color coordination
+- [ ] add better typer container
+- [ ] add true analytics
+- [ ] add helper screens
