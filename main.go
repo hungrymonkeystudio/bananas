@@ -29,8 +29,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
         case "q":
             return m, tea.Quit
         case "enter":
-            m.typer.words = createTest()
-            m.typer.idx = 0
+            m.typer = NewTyper()
         }
     }
     updatedTimer, timerCmd := m.timer.Update(msg)
@@ -53,10 +52,7 @@ func (m MainModel) View() string {
 func main() {
     initialModel := MainModel{
         timer: NewTimerModel(timeout),
-        typer: TyperModel{
-            words: createTest(),
-            idx: 0,
-        },
+        typer: NewTyper(),
         analysis: AnalysisModel{
             wpm: 0,
             accuracy: 0.0,

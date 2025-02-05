@@ -29,25 +29,36 @@ var commonWords = []string{
 	"never", "own", "around", "number", "call", "why",
 }
 
-// creates a string of random words separated by spaces
-func createTest() string {
-	var result []string
+type TyperModel struct {
+    wordList []string
+    wordIdx int
+    currWord []string
+    charIdx int
+    completeWords []string
+} 
 
-	// Generate the random string by picking words from the commonWords list
+func NewTyper() TyperModel {
+    return TyperModel{
+        wordList: createTest(),
+        wordIdx: 0,
+        currWord: []string{},
+        charIdx: 0,
+        completeWords: []string{},
+    }
+}
+
+func createTest() []string {
+	var result []string
 	for i := 0; i < 20; i++ {
-		// Pick a random word from the commonWords slice
 		randomIndex := rand.Intn(len(commonWords))
 		result = append(result, commonWords[randomIndex])
 	}
-
-	// Join the words into a single string, separated by spaces
-	return strings.Join(result, " ")
+    return result
 }
 
-type TyperModel struct {
-    words string
-    idx int
-} 
+func typerComp(userLetter, msgLetter string) bool {
+    return userLetter == msgLetter
+}
 
 func (tym TyperModel) Init() tea.Cmd {
     return nil
@@ -57,24 +68,42 @@ func (tym TyperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
     switch msg := msg.(type) {
     case tea.KeyMsg:
         switch msg.String() {
-        case "ctrl+c":
-            return tym, tea.Quit
-        case "q":
-            return tym, tea.Quit
-        default:
-            if tym.idx < len(tym.words) {
-                tym.idx++
+        case " ":
+            if tym.wordIdx < len(tym.wordList) {
+                tym.wordIdx++
+                tym.charIdx = 0
+                tym.completeWords = append(tym.completeWords, strings.Join(tym.currWord, ""))
+                tym.currWord = []string{}
+            } else {
+                return tym, tea.Quit
             }
-            return tym, nil
+        case "backspace":
+            if (tym.charIdx >= 0) {
+                tym.currWord = tym.currWord[:len(tym.currWord)-1]
+                tym.charIdx--
+            }
+        default:
+            currentWord := tym.wordList[tym.wordIdx]
+            if (tym.charIdx < len(currentWord)) {
+                if typerComp(msg.String(), string(currentWord[tym.charIdx])) {
+                    tym.currWord = append(tym.currWord, white.Render(msg.String()))
+                } else {
+                    tym.currWord = append(tym.currWord, red.Render(msg.String()))
+                }
+                tym.charIdx++
+            } else {
+                tym.currWord = append(tym.currWord, red.Render(msg.String()))
+            }
         }
     }
     return tym, nil
 }
 
 func (tym TyperModel) View() string {   
-    prev := white.Render(tym.words[:tym.idx])
-    next := gray.Render(tym.words[tym.idx:])
-    return lipgloss.NewStyle().Render(prev + next)
+    wordListStr := gray.Render(strings.Join(tym.wordList, " "))
+    currWordText := strings.Join(tym.currWord, "")
+    completeWordsText := strings.Join(tym.completeWords, " ") 
+    return lipgloss.NewStyle().Render(wordListStr + "\n" + completeWordsText + " " + currWordText)
 }
 
 
