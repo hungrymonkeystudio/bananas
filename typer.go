@@ -34,6 +34,7 @@ type TyperModel struct {
     currWord []string
     charIdx int
     completeWords []string
+    done bool
 } 
 
 func NewTyper() TyperModel {
@@ -43,6 +44,7 @@ func NewTyper() TyperModel {
         currWord: []string{},
         charIdx: 0,
         completeWords: []string{},
+        done: false,
     }
 }
 
@@ -73,13 +75,16 @@ func (tym TyperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
                 tym.charIdx = 0
                 tym.completeWords = append(tym.completeWords, strings.Join(tym.currWord, ""))
                 tym.currWord = []string{}
-            } else {
-                return tym, tea.Quit
+            }
+            if tym.wordIdx >= len(tym.wordList) {
+                tym.done = true
             }
         case "backspace":
-            if (tym.charIdx >= 0) {
+            if (tym.charIdx >= 0 && len(tym.wordList[tym.wordIdx]) >= len(tym.currWord)) {
                 tym.currWord = tym.currWord[:len(tym.currWord)-1]
                 tym.charIdx--
+            } else if (tym.charIdx >= 0) {
+                tym.currWord = tym.currWord[:len(tym.currWord)-1]
             }
         default:
             currentWord := tym.wordList[tym.wordIdx]
@@ -91,7 +96,7 @@ func (tym TyperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
                 }
                 tym.charIdx++
             } else {
-                tym.currWord = append(tym.currWord, red.Render(string(currentWord[tym.charIdx])))
+                tym.currWord = append(tym.currWord, red.Render(msg.String()))
             }
         }
     }
@@ -99,12 +104,15 @@ func (tym TyperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (tym TyperModel) View() string {   
-    incompleteWords := gray.Render(strings.Join(tym.wordList[tym.wordIdx+1:], " "))
-    currWordText := strings.Join(tym.currWord, "") + gray.Render(tym.wordList[tym.wordIdx][tym.charIdx:])
-    completeWordsText := strings.Join(tym.completeWords, " ") 
+    if !tym.done {
+        incompleteWords := gray.Render(strings.Join(tym.wordList[tym.wordIdx+1:], " "))
+        currWordText := strings.Join(tym.currWord, "") + gray.Render(tym.wordList[tym.wordIdx][tym.charIdx:])
+        completeWordsText := strings.Join(tym.completeWords, " ") 
 
-    finalText := completeWordsText + " " + currWordText + " " + incompleteWords
-    return finalText
+        finalText := completeWordsText + " " + currWordText + " " + incompleteWords
+        return finalText
+    }
+    return ""
 }
 
 
