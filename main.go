@@ -43,6 +43,8 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m MainModel) View() string {
     if (m.timer.done || m.typer.done) {
+        m.analysis.wpm = 30
+        m.analysis.accuracy = 98.0
         return m.analysis.View()
     }
     return fmt.Sprintf("%s\n%s", m.timer.View(), m.typer.View())
