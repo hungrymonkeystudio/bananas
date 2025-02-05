@@ -80,11 +80,13 @@ func (tym TyperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
                 tym.done = true
             }
         case "backspace":
-            if (tym.charIdx >= 0 && len(tym.wordList[tym.wordIdx]) >= len(tym.currWord)) {
+            if (tym.charIdx > 0 && len(tym.wordList[tym.wordIdx]) >= len(tym.currWord)) {
                 tym.currWord = tym.currWord[:len(tym.currWord)-1]
                 tym.charIdx--
-            } else if (tym.charIdx >= 0) {
+            } else if (tym.charIdx > 0) {
                 tym.currWord = tym.currWord[:len(tym.currWord)-1]
+            } else {
+                tym.currWord = []string{""}
             }
         default:
             currentWord := tym.wordList[tym.wordIdx]
