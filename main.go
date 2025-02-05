@@ -5,14 +5,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 const timeout = time.Second * 30
 
 type MainModel struct {
-    timer timer.Model 
+    timer TimerModel 
     typer TyperModel
     analysis AnalysisModel
 }
@@ -23,14 +22,6 @@ func (m MainModel) Init() tea.Cmd {
 
 func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
     switch msg := msg.(type) {
-    case timer.TickMsg:
-        var cmd tea.Cmd
-        m.timer, cmd = m.timer.Update(msg)
-        return m, cmd
-    case timer.StartStopMsg:
-        var cmd tea.Cmd
-        m.timer, cmd = m.timer.Update(msg)
-        return m, cmd
     case tea.KeyMsg:
         switch msg.String() {
         case "ctrl+c":
@@ -40,19 +31,19 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
         case "enter":
             m.typer.words = createTest()
             m.typer.idx = 0
-        default:
-            return m, m.timer.Init()
         }
     }
+    updatedTimer, timerCmd := m.timer.Update(msg)
+    m.timer = updatedTimer.(TimerModel)
     updatedTyper, typerCmd := m.typer.Update(msg)
     m.typer = updatedTyper.(TyperModel)
     updatedAnalysis, analysisCmd := m.analysis.Update(msg)
     m.analysis = updatedAnalysis.(AnalysisModel)
-    return m, tea.Batch(typerCmd, analysisCmd)
+    return m, tea.Batch(timerCmd, typerCmd, analysisCmd)
 }
 
 func (m MainModel) View() string {
-    if (m.timer.Timedout()) {
+    if (m.timer.done) {
         return m.analysis.View()
     }
     return fmt.Sprintf("%s\n%s", m.timer.View(), m.typer.View())
@@ -61,7 +52,7 @@ func (m MainModel) View() string {
 
 func main() {
     initialModel := MainModel{
-        timer: timer.NewWithInterval(timeout, time.Second),
+        timer: NewTimerModel(timeout),
         typer: TyperModel{
             words: createTest(),
             idx: 0,
