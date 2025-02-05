@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 var commonWords = []string{
@@ -88,11 +87,11 @@ func (tym TyperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
                 if typerComp(msg.String(), string(currentWord[tym.charIdx])) {
                     tym.currWord = append(tym.currWord, white.Render(msg.String()))
                 } else {
-                    tym.currWord = append(tym.currWord, red.Render(msg.String()))
+                    tym.currWord = append(tym.currWord, red.Render(string(currentWord[tym.charIdx])))
                 }
                 tym.charIdx++
             } else {
-                tym.currWord = append(tym.currWord, red.Render(msg.String()))
+                tym.currWord = append(tym.currWord, red.Render(string(currentWord[tym.charIdx])))
             }
         }
     }
@@ -100,10 +99,12 @@ func (tym TyperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (tym TyperModel) View() string {   
-    wordListStr := gray.Render(strings.Join(tym.wordList, " "))
-    currWordText := strings.Join(tym.currWord, "")
+    incompleteWords := gray.Render(strings.Join(tym.wordList[tym.wordIdx+1:], " "))
+    currWordText := strings.Join(tym.currWord, "") + gray.Render(tym.wordList[tym.wordIdx][tym.charIdx:])
     completeWordsText := strings.Join(tym.completeWords, " ") 
-    return lipgloss.NewStyle().Render(wordListStr + "\n" + completeWordsText + " " + currWordText)
+
+    finalText := completeWordsText + " " + currWordText + " " + incompleteWords
+    return finalText
 }
 
 
