@@ -35,6 +35,7 @@ type TyperModel struct {
     charIdx int
     completeWords []string
     done bool
+    numIncorrect int
 } 
 
 func NewTyper() TyperModel {
@@ -45,6 +46,7 @@ func NewTyper() TyperModel {
         charIdx: 0,
         completeWords: []string{},
         done: false,
+        numIncorrect: 0,
     }
 }
 
@@ -95,10 +97,12 @@ func (tym TyperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
                     tym.currWord = append(tym.currWord, white.Render(msg.String()))
                 } else {
                     tym.currWord = append(tym.currWord, red.Render(string(currentWord[tym.charIdx])))
+                    tym.numIncorrect++
                 }
                 tym.charIdx++
             } else {
                 tym.currWord = append(tym.currWord, red.Render(msg.String()))
+                tym.numIncorrect++
             }
         }
     }
