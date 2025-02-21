@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"strings"
 
@@ -28,39 +29,82 @@ var commonWords = []string{
 	"never", "own", "around", "number", "call", "why",
 }
 
+const MAXLINES = 3
+// max characters per line is either 60
+// or if screen is smaller than do
+// screen width - 16 (padding on each side)
+var MAXCHARPERLINE = 60
+
 type TyperModel struct {
-    wordList []string
+    // text related parameters
+    lines [][]string
+    linesColor [][]string
+    lineIdx int
     wordIdx int
-    currWord []string
     charIdx int
-    completeWords []string
-    done bool
-    numIncorrect int
+    skips [][]int // should specify, line, word, and char idx
+    currWordSize int // track to handle extra words
 } 
 
 func NewTyper() TyperModel {
+    fmt.Println("NewTyper")
+    // create MAXLINES number of text
+    // each line should have max MAXCHARPERLINE characters
+    lines := [][]string{}
+    colorLines := [][]string{}
+    for i := 0; i < MAXLINES; i++ {
+        line, colorLine := createLine()
+        lines = append(lines, line)
+        colorLines = append(colorLines, colorLine)
+    }
     return TyperModel{
-        wordList: createTest(),
+        lines: lines,
+        linesColor: colorLines,
+        lineIdx: 0,
         wordIdx: 0,
-        currWord: []string{},
         charIdx: 0,
-        completeWords: []string{},
-        done: false,
-        numIncorrect: 0,
+        skips: [][]int{},
+        currWordSize: len(lines[0][0]),
     }
 }
 
-func createTest() []string {
+func createLine() ([]string, []string) {
 	var result []string
-	for i := 0; i < 20; i++ {
+    var colorResult []string
+    currChars := 0
+    // while all chars less than MAXCHARPERLINE
+    for currChars < MAXCHARPERLINE {
 		randomIndex := rand.Intn(len(commonWords))
-		result = append(result, commonWords[randomIndex])
-	}
-    return result
+        if (currChars + len(commonWords[randomIndex]) <= MAXCHARPERLINE) {
+            result = append(result, commonWords[randomIndex])
+            colorResult = append(colorResult, strings.Repeat("g", len(commonWords[randomIndex])))
+        }
+        currChars += 1 + len(commonWords[randomIndex])
+    }
+    return result, colorResult
 }
 
 func typerComp(userLetter, msgLetter string) bool {
     return userLetter == msgLetter
+}
+
+func typerColor(letters, colors string) string {
+    output := ""
+    for i := 0; i < len(letters); i++ {
+        color := colors[i]
+        letter := letters[i]
+        switch color {
+        case 'r':
+            output += red.Render(string(letter))
+        case 'g':
+            output += gray.Render(string(letter))
+        case 'w':
+            output += white.Render(string(letter))
+        default:
+            output += string(letter)
+        }
+    }
+    return output
 }
 
 func (tym TyperModel) Init() tea.Cmd {
@@ -69,56 +113,109 @@ func (tym TyperModel) Init() tea.Cmd {
 
 func (tym TyperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
     switch msg := msg.(type) {
+    case tea.WindowSizeMsg:
+        MAXCHARPERLINE = min(msg.Width-16, 60)
+        return tym, nil
     case tea.KeyMsg:
         switch msg.String() {
         case " ":
-            if tym.wordIdx < len(tym.wordList) {
-                tym.wordIdx++
-                tym.charIdx = 0
-                tym.completeWords = append(tym.completeWords, strings.Join(tym.currWord, ""))
-                tym.currWord = []string{}
-            }
-            if tym.wordIdx >= len(tym.wordList) {
-                tym.done = true
-            }
-        case "backspace":
-            if (tym.charIdx > 0 && len(tym.wordList[tym.wordIdx]) >= len(tym.currWord)) {
-                tym.currWord = tym.currWord[:len(tym.currWord)-1]
-                tym.charIdx--
-            } else if (tym.charIdx > 0) {
-                tym.currWord = tym.currWord[:len(tym.currWord)-1]
+            // if word is completed, reset skips
+            // otherwise store skips
+            if (tym.charIdx >= tym.currWordSize-1) {
+                tym.skips = [][]int{}
             } else {
-                tym.currWord = []string{""}
+                tym.skips = append(tym.skips, []int{tym.lineIdx, tym.wordIdx, tym.charIdx})
+            }
+            // if word is last word in the line
+            // lineIdx + 1, wordIdx = 0, charIdx = 0
+            // otherwise move to next line
+            // wordIdx + 1, charIdx = 0 
+            if (tym.wordIdx == len(tym.lines[tym.lineIdx]) - 1) {
+                tym.wordIdx = 0
+                tym.charIdx = 0
+                // if not first line, push all lines up and create new line words
+                if (tym.lineIdx != 0) {
+                    tym.lines[0] = tym.lines[1]
+                    tym.linesColor[0] = tym.linesColor[1]
+                    tym.lines[1] = tym.lines[2]
+                    tym.linesColor[1] = tym.linesColor[2]
+                    tym.lines[2], tym.linesColor[2] = createLine()
+                } else {
+                    tym.lineIdx += 1
+                }
+            } else {
+                tym.wordIdx += 1
+                tym.charIdx = 0
+            }
+            tym.currWordSize = len(tym.lines[tym.lineIdx][tym.wordIdx])
+        case "backspace":
+            // if charIdx is 0 and skip isn' t empty
+            // start at skipped position
+            // if charIdx is 0 and skip is empty
+            // do nothing
+            // if current charIdx is at an extra character
+            // delete from word and color
+            // otherwise simply change color back to gray
+            if tym.charIdx <= 0 && len(tym.skips) <= 0 {
+                return tym, nil 
+            } 
+            if tym.charIdx <= 0 && len(tym.skips) > 0 {
+                tym.lineIdx = tym.skips[len(tym.skips)-1][0]
+                tym.wordIdx = tym.skips[len(tym.skips)-1][1]
+                tym.charIdx = tym.skips[len(tym.skips)-1][2]
+                tym.skips = tym.skips[:len(tym.skips)-1]
+                tym.currWordSize = len(tym.lines[tym.lineIdx][tym.wordIdx])
+            } else if tym.charIdx > tym.currWordSize {
+                tym.charIdx -= 1
+                tym.lines[tym.lineIdx][tym.wordIdx] = tym.lines[tym.lineIdx][tym.wordIdx][:tym.charIdx]
+                tym.linesColor[tym.lineIdx][tym.wordIdx] = tym.linesColor[tym.lineIdx][tym.wordIdx][:tym.charIdx]
+            } else {
+                tym.charIdx -= 1
+                tempRune := []rune(tym.linesColor[tym.lineIdx][tym.wordIdx])
+                tempRune[tym.charIdx] = 'g'
+                tym.linesColor[tym.lineIdx][tym.wordIdx] = string(tempRune)
             }
         default:
-            currentWord := tym.wordList[tym.wordIdx]
-            if (tym.charIdx < len(currentWord)) {
-                if typerComp(msg.String(), string(currentWord[tym.charIdx])) {
-                    tym.currWord = append(tym.currWord, white.Render(msg.String()))
-                } else {
-                    tym.currWord = append(tym.currWord, red.Render(string(currentWord[tym.charIdx])))
-                    tym.numIncorrect++
-                }
-                tym.charIdx++
+            // if there are extra characters inputed
+            // append to end of word and color word
+            if (tym.charIdx >= tym.currWordSize) {
+                tempRune := []rune(tym.lines[tym.lineIdx][tym.wordIdx])
+                tempRune = append(tempRune, []rune(msg.String())...)
+                tym.lines[tym.lineIdx][tym.wordIdx] = string(tempRune)
+                tempRune = []rune(tym.linesColor[tym.lineIdx][tym.wordIdx])
+                tempRune = append(tempRune, 'r')
+                tym.linesColor[tym.lineIdx][tym.wordIdx] = string(tempRune)
             } else {
-                tym.currWord = append(tym.currWord, red.Render(msg.String()))
-                tym.numIncorrect++
+                // if correct change color to white
+                // if wrong change color to red
+                if (typerComp(msg.String(), string(tym.lines[tym.lineIdx][tym.wordIdx][tym.charIdx]))) {
+                    tempRune := []rune(tym.linesColor[tym.lineIdx][tym.wordIdx])
+                    tempRune[tym.charIdx] = 'w'
+                    tym.linesColor[tym.lineIdx][tym.wordIdx] = string(tempRune)
+                } else {
+                    tempRune := []rune(tym.linesColor[tym.lineIdx][tym.wordIdx])
+                    tempRune[tym.charIdx] = 'r'
+                    tym.linesColor[tym.lineIdx][tym.wordIdx] = string(tempRune)
+                }
             }
+            tym.charIdx += 1
         }
     }
     return tym, nil
 }
 
 func (tym TyperModel) View() string {   
-    if !tym.done {
-        incompleteWords := gray.Render(strings.Join(tym.wordList[tym.wordIdx+1:], " "))
-        currWordText := strings.Join(tym.currWord, "") + gray.Render(tym.wordList[tym.wordIdx][tym.charIdx:])
-        completeWordsText := strings.Join(tym.completeWords, " ") 
-
-        finalText := completeWordsText + " " + currWordText + " " + incompleteWords
-        return finalText
+    // fmt.Println(tym.lines, tym.linesColor)
+    // fmt.Println(tym.linesColor)
+    output := ""
+    // print out each line based on color
+    for i := 0; i < MAXLINES; i++ { // line num
+        for j := 0; j < len(tym.lines[i]); j++ { // word num
+            output += typerColor(tym.lines[i][j], tym.linesColor[i][j]) + " "
+        }
+        output += "\n"
     }
-    return ""
+    return output 
 }
 
 
