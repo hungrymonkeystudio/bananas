@@ -7,8 +7,10 @@ import (
 )
 
 type AnalysisModel struct {
-    wpm int
-    accuracy float64
+    time int // amount of time taken
+    words int // number of correct words
+    correct int // number of correct characters
+    characters int // total characters typed 
 }
 
 func (am AnalysisModel) Init() tea.Cmd {
@@ -29,7 +31,9 @@ func (am AnalysisModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (am AnalysisModel) View() string {
-    wpmText := white.Render(fmt.Sprintf("wpm: %d", am.wpm))
-    accuracyText := white.Render(fmt.Sprintf("acc: %.2f", am.accuracy))
+    wpm := int(float64(am.words) / float64(am.time) * 60.0)
+    accuracy := float64(am.correct) / float64(am.characters) * 100
+    wpmText := white.Render(fmt.Sprintf("wpm: %d", wpm))
+    accuracyText := white.Render(fmt.Sprintf("acc: %.2f", accuracy))
     return wpmText + "\n" + accuracyText 
 }

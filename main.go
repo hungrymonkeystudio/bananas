@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -14,6 +15,8 @@ type MainModel struct {
     timer TimerModel 
     typer TyperModel
     analysis AnalysisModel
+    width int
+    height int
 }
 
 func (m MainModel) Init() tea.Cmd {
@@ -22,6 +25,9 @@ func (m MainModel) Init() tea.Cmd {
 
 func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
     switch msg := msg.(type) {
+    case tea.WindowSizeMsg:
+        m.width = msg.Width
+        m.height = msg.Height
     case tea.KeyMsg:
         switch msg.String() {
         case "ctrl+c":
@@ -30,22 +36,45 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
             return m, tea.Quit
         case "enter":
             m.typer = NewTyper()
+            m.timer = NewTimerModel(timeout)
         }
+    }
+    if (m.timer.done) {
+        updatedAnalysis, analysisCmd := m.analysis.Update(msg)
+        m.analysis = updatedAnalysis.(AnalysisModel)
+        return m, analysisCmd
     }
     updatedTimer, timerCmd := m.timer.Update(msg)
     m.timer = updatedTimer.(TimerModel)
     updatedTyper, typerCmd := m.typer.Update(msg)
     m.typer = updatedTyper.(TyperModel)
-    updatedAnalysis, analysisCmd := m.analysis.Update(msg)
-    m.analysis = updatedAnalysis.(AnalysisModel)
-    return m, tea.Batch(timerCmd, typerCmd, analysisCmd)
+    return m, tea.Batch(timerCmd, typerCmd)
 }
 
 func (m MainModel) View() string {
+    output := ""
+    paddingY := (m.height - MAXLINES+1) / 2
+	paddingX := (m.width - MAXCHARPERLINE) / 2
+    // top padding
+    output += strings.Repeat("\n", paddingY)
+    // left padding
     if (m.timer.done) {
-        return m.analysis.View()
+        m.analysis.time = int(timeout.Seconds())
+        m.analysis.words = m.typer.totalWords
+        m.analysis.correct = m.typer.totalCorrect
+        m.analysis.characters = m.typer.totalTyped
+        outputLines := strings.Split(m.analysis.View(), "\n")
+        for i := 0; i < len(outputLines) ; i++ {
+            output += strings.Repeat(" ", paddingX) + outputLines[i] + "\n"
+        }
+    } else {
+        output += strings.Repeat(" ", paddingX) + m.timer.View() + "\n"
+        outputLines := strings.Split(m.typer.View(), "\n")
+        for i := 0; i < len(outputLines); i++ {
+            output += strings.Repeat(" ", paddingX) + outputLines[i] + "\n"
+        }
     }
-    return fmt.Sprintf("%s\n%s", m.timer.View(), m.typer.View())
+    return output
 }
 
 func main() {
@@ -53,11 +82,15 @@ func main() {
         timer: NewTimerModel(timeout),
         typer: NewTyper(),
         analysis: AnalysisModel{
-            wpm: 0,
-            accuracy: 0.0,
+            time: 0,
+            words: 0,
+            correct: 0,
+            characters: 0,
         },
+        width: 120,
+        height: 8,
     }
-    p := tea.NewProgram(initialModel)
+    p := tea.NewProgram(initialModel, tea.WithAltScreen())
     if _, err := p.Run(); err != nil {
         fmt.Println("Error starting game:", err)
         os.Exit(1)

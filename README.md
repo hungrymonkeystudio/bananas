@@ -2,16 +2,9 @@
 
 monkeytype in your terminal
 
-- [x] create interface with timer
-- [x] create interface with words
-- [x] create timer interface
-- [x] create wpm and accuracy end screen
-- [x] create separate window for retry
-
-- [x] fix color coordination
-- [ ] add better typer container
-- [ ] add true analytics
-- [ ] add helper screens
-
-- [ ] add cursor
+- [ ] add more words
+- [ ] add different time controls
+- [ ] test for any bugs
 - [ ] add installation script 
+- [ ] improve performance
+

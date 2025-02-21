@@ -37,6 +37,9 @@ func (m TimerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
         var cmd tea.Cmd
         m.timer, cmd = m.timer.Update(msg)
         return m, cmd
+    case timer.TimeoutMsg:
+        m.done = true
+        return m, nil
     case tea.KeyMsg:
         switch msg.String() {
         default:
