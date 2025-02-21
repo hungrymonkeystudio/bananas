@@ -84,29 +84,6 @@ func createLine() ([]string, []string) {
     return result, colorResult
 }
 
-func typerComp(userLetter, msgLetter string) bool {
-    return userLetter == msgLetter
-}
-
-func typerColor(letters, colors string) string {
-    output := ""
-    for i := 0; i < len(letters); i++ {
-        color := colors[i]
-        letter := letters[i]
-        switch color {
-        case 'r':
-            output += red.Render(string(letter))
-        case 'g':
-            output += gray.Render(string(letter))
-        case 'w':
-            output += white.Render(string(letter))
-        default:
-            output += string(letter)
-        }
-    }
-    return output
-}
-
 func (tym TyperModel) Init() tea.Cmd {
     return nil
 }
@@ -188,7 +165,7 @@ func (tym TyperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
             } else {
                 // if correct change color to white
                 // if wrong change color to red
-                if (typerComp(msg.String(), string(tym.lines[tym.lineIdx][tym.wordIdx][tym.charIdx]))) {
+                if (msg.String() == string(tym.lines[tym.lineIdx][tym.wordIdx][tym.charIdx])) {
                     tempRune := []rune(tym.linesColor[tym.lineIdx][tym.wordIdx])
                     tempRune[tym.charIdx] = 'w'
                     tym.linesColor[tym.lineIdx][tym.wordIdx] = string(tempRune)
@@ -201,17 +178,41 @@ func (tym TyperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
             tym.charIdx += 1
         }
     }
-    return tym, nil
+    return tym, nil 
 }
 
 func (tym TyperModel) View() string {   
     // fmt.Println(tym.lines, tym.linesColor)
     // fmt.Println(tym.linesColor)
     output := ""
+    cursorOnSpace := true 
     // print out each line based on color
     for i := 0; i < MAXLINES; i++ { // line num
         for j := 0; j < len(tym.lines[i]); j++ { // word num
-            output += typerColor(tym.lines[i][j], tym.linesColor[i][j]) + " "
+            for k := 0; k < len(tym.lines[i][j]); k++ {
+                color := tym.linesColor[i][j][k]
+                letter := tym.lines[i][j][k]
+                if (k == tym.charIdx && i == tym.lineIdx && j == tym.wordIdx) {
+                    cursorOnSpace = false 
+                    output += cursor.Render(string(letter))
+                } else {
+                    switch color {
+                    case 'r':
+                        output += red.Render(string(letter))
+                    case 'g':
+                        output += gray.Render(string(letter))
+                    case 'w':
+                        output += white.Render(string(letter))
+                    default:
+                        output += string(letter)
+                    }
+                }
+            }
+            if (i == tym.lineIdx && j == tym.wordIdx && cursorOnSpace) {
+                output += cursor.Render(" ")
+            } else {
+                output += " "
+            }
         }
         output += "\n"
     }
