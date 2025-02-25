@@ -23,8 +23,6 @@ func (am AnalysisModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
         switch msg.String() {
         case "ctrl+c":
             return am, tea.Quit
-        case "q":
-            return am, tea.Quit
         }
     }
     return am, nil

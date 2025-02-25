@@ -1,33 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"math/rand"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
-
-var commonWords = []string{
-	"the", "be", "to", "of", "and", "a", "in", "that", "have", "I",
-	"it", "for", "not", "on", "with", "he", "as", "you", "do", "at",
-	"this", "but", "his", "by", "from", "they", "we", "say", "her",
-	"she", "or", "an", "will", "my", "one", "all", "would", "there",
-	"their", "what", "so", "up", "out", "if", "about", "who", "get",
-	"which", "go", "me", "when", "make", "can", "like", "time", "no",
-	"just", "him", "know", "take", "people", "into", "year", "your",
-	"good", "some", "could", "them", "see", "other", "than", "then",
-	"now", "look", "only", "come", "its", "over", "think", "also",
-	"back", "after", "use", "two", "how", "our", "work", "first",
-	"well", "way", "even", "new", "want", "because", "any", "these",
-	"give", "day", "most", "us", "is", "are", "was", "were", "am",
-	"theirs", "how", "shes", "through", "me", "myself", "watch", "find",
-	"many", "never", "down", "before", "where", "called", "might", "while",
-	"too", "next", "made", "here", "know", "point", "few", "lost",
-	"does", "long", "those", "by", "more", "heart", "world", "last",
-	"left", "should", "call", "hard", "still", "each", "turn", "too",
-	"never", "own", "around", "number", "call", "why",
-}
 
 const MAXLINES = 3
 // max characters per line is either 60
@@ -51,7 +29,6 @@ type TyperModel struct {
 } 
 
 func NewTyper() TyperModel {
-    fmt.Println("NewTyper")
     // create MAXLINES number of text
     // each line should have max MAXCHARPERLINE characters
     lines := [][]string{}
@@ -84,13 +61,13 @@ func createLine() ([]string, []string, []int) {
     currChars := 0
     // while all chars less than MAXCHARPERLINE
     for currChars < MAXCHARPERLINE {
-		randomIndex := rand.Intn(len(commonWords))
-        if (currChars + len(commonWords[randomIndex]) <= MAXCHARPERLINE) {
-            result = append(result, commonWords[randomIndex])
-            colorResult = append(colorResult, strings.Repeat("g", len(commonWords[randomIndex])))
-            sizeResult = append(sizeResult, len(commonWords[randomIndex]))
+		randomIndex := rand.Intn(len(COMMONWORDS))
+        if (currChars + len(COMMONWORDS[randomIndex]) <= MAXCHARPERLINE) {
+            result = append(result, COMMONWORDS[randomIndex])
+            colorResult = append(colorResult, strings.Repeat("g", len(COMMONWORDS[randomIndex])))
+            sizeResult = append(sizeResult, len(COMMONWORDS[randomIndex]))
         }
-        currChars += 1 + len(commonWords[randomIndex])
+        currChars += 1 + len(COMMONWORDS[randomIndex])
     }
     return result, colorResult, sizeResult
 }
@@ -209,8 +186,6 @@ func (tym TyperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (tym TyperModel) View() string {   
-    // fmt.Println(tym.lines, tym.linesColor)
-    // fmt.Println(tym.linesColor)
     output := ""
     cursorOnSpace := true 
     // print out each line based on color

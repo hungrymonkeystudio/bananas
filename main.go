@@ -1,6 +1,7 @@
 package main
 
 import (
+    "bufio"
 	"fmt"
 	"os"
 	"strings"
@@ -10,6 +11,7 @@ import (
 )
 
 const timeout = time.Second * 30
+var COMMONWORDS []string
 
 type MainModel struct {
     timer TimerModel 
@@ -31,8 +33,6 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
     case tea.KeyMsg:
         switch msg.String() {
         case "ctrl+c":
-            return m, tea.Quit
-        case "q":
             return m, tea.Quit
         case "enter":
             m.typer = NewTyper()
@@ -78,7 +78,19 @@ func (m MainModel) View() string {
     return output
 }
 
+func setup() {
+    // get common words from file
+    file, _ := os.Open("common-words.txt")
+    defer file.Close()
+    scanner := bufio.NewScanner(file)
+    for scanner.Scan() {
+        COMMONWORDS = append(COMMONWORDS, scanner.Text())
+    }
+}
+
 func main() {
+    // run this function to initialize important shit
+    setup()
     initialModel := MainModel{
         timer: NewTimerModel(timeout),
         typer: NewTyper(),
