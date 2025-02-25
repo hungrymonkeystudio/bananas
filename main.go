@@ -37,6 +37,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
         case "enter":
             m.typer = NewTyper()
             m.timer = NewTimerModel(timeout)
+            return m, nil
         }
     }
     if (m.timer.done) {
