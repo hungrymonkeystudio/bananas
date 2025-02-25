@@ -11,4 +11,6 @@ var (
     yellow = lg.NewStyle().Foreground(lg.Color("#d6c43c"))
     gray = lg.NewStyle().Foreground(lg.Color("#787878"))
     cursor = lg.NewStyle().Foreground(lg.Color("#000000")).Background(lg.Color("#ffffff"))
+    instructions = lg.NewStyle().Foreground(lg.Color("#525252"))
+    underline = lg.NewStyle().Foreground(lg.Color("#ffffff")).Underline(true)
 )

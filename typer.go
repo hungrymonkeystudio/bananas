@@ -155,6 +155,10 @@ func (tym TyperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
                 tym.linesColor[tym.lineIdx][tym.wordIdx] = string(tempRune)
             }
         default:
+            // ignore if string is greater than 1
+            if (len(msg.String()) > 1) {
+                return tym, nil
+            }
             // if there are extra characters inputed
             // append to end of word and color word
             if (tym.charIdx >= tym.wordSizes[tym.lineIdx][tym.wordIdx]) {

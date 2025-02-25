@@ -13,6 +13,16 @@ type AnalysisModel struct {
     characters int // total characters typed 
 }
 
+func NewAnalysisModel() AnalysisModel{
+    return AnalysisModel{
+        time: 0,
+        words: 0,
+        correct: 0,
+        characters: 0,
+    }
+}
+
+
 func (am AnalysisModel) Init() tea.Cmd {
     return nil
 }

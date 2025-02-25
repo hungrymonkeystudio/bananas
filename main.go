@@ -17,6 +17,7 @@ type MainModel struct {
     timer TimerModel 
     typer TyperModel
     analysis AnalysisModel
+    settings SettingsModel
     width int
     height int
 }
@@ -35,10 +36,22 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
         case "ctrl+c":
             return m, tea.Quit
         case "enter":
-            m.typer = NewTyper()
-            m.timer = NewTimerModel(timeout)
+            if m.timer.done {
+                m.typer = NewTyper()
+                m.timer = NewTimerModel(timeout)
+                return m, nil
+            }
+        case "esc":
+            m.settings.show = !m.settings.show
             return m, nil
         }
+    }
+    if (m.settings.show) {
+        updatedTimer, timerCmd := m.timer.Update(msg)
+        m.timer = updatedTimer.(TimerModel)
+        updatedSettings, settingsCmd := m.settings.Update(msg)
+        m.settings = updatedSettings.(SettingsModel)
+        return m, tea.Batch(settingsCmd, timerCmd)
     }
     if (m.timer.done) {
         updatedAnalysis, analysisCmd := m.analysis.Update(msg)
@@ -68,6 +81,11 @@ func (m MainModel) View() string {
         for i := 0; i < len(outputLines) ; i++ {
             output += strings.Repeat(" ", paddingX) + outputLines[i] + "\n"
         }
+    } else if m.settings.show {
+        outputLines := strings.Split(m.settings.View(), "\n")
+        for _, line := range outputLines {
+            output += strings.Repeat(" ", paddingX) + line + "\n"
+        }
     } else {
         output += strings.Repeat(" ", paddingX) + m.timer.View() + "\n"
         outputLines := strings.Split(m.typer.View(), "\n")
@@ -94,12 +112,8 @@ func main() {
     initialModel := MainModel{
         timer: NewTimerModel(timeout),
         typer: NewTyper(),
-        analysis: AnalysisModel{
-            time: 0,
-            words: 0,
-            correct: 0,
-            characters: 0,
-        },
+        analysis: NewAnalysisModel(),
+        settings: NewSettingsModel(),
         width: 120,
         height: 8,
     }
