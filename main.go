@@ -10,14 +10,13 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-const timeout = time.Second * 30
 var COMMONWORDS []string
 
 type MainModel struct {
+    settings SettingsModel
     timer TimerModel 
     typer TyperModel
     analysis AnalysisModel
-    settings SettingsModel
     width int
     height int
 }
@@ -27,6 +26,7 @@ func (m MainModel) Init() tea.Cmd {
 }
 
 func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+    // global updates that happen regardless of current view 
     switch msg := msg.(type) {
     case tea.WindowSizeMsg:
         m.width = msg.Width
@@ -35,34 +35,28 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
         switch msg.String() {
         case "ctrl+c":
             return m, tea.Quit
-        case "enter":
-            if m.timer.done {
-                m.typer = NewTyper()
-                m.timer = NewTimerModel(timeout)
-                return m, nil
-            }
         case "esc":
             m.settings.show = !m.settings.show
             return m, nil
         }
     }
-    if (m.settings.show) {
-        updatedTimer, timerCmd := m.timer.Update(msg)
-        m.timer = updatedTimer.(TimerModel)
+    // local updates that are dependent on which view is active
+    if m.settings.show { // only update settings when settings show
         updatedSettings, settingsCmd := m.settings.Update(msg)
         m.settings = updatedSettings.(SettingsModel)
-        return m, tea.Batch(settingsCmd, timerCmd)
-    }
-    if (m.timer.done) {
+        return m, settingsCmd
+    } else if (m.timer.done) { // only update analysis when timer is done
         updatedAnalysis, analysisCmd := m.analysis.Update(msg)
         m.analysis = updatedAnalysis.(AnalysisModel)
         return m, analysisCmd
+    } else if (m.timer.started) { // update timer and typer if timer has started
+        updatedTimer, timerCmd := m.timer.Update(msg)
+        m.timer = updatedTimer.(TimerModel)
+        updatedTyper, typerCmd := m.typer.Update(msg)
+        m.typer = updatedTyper.(TyperModel)
+        return m, tea.Batch(timerCmd, typerCmd)
     }
-    updatedTimer, timerCmd := m.timer.Update(msg)
-    m.timer = updatedTimer.(TimerModel)
-    updatedTyper, typerCmd := m.typer.Update(msg)
-    m.typer = updatedTyper.(TyperModel)
-    return m, tea.Batch(timerCmd, typerCmd)
+    return m, nil
 }
 
 func (m MainModel) View() string {
@@ -73,7 +67,7 @@ func (m MainModel) View() string {
     output += strings.Repeat("\n", paddingY)
     // left padding
     if (m.timer.done) {
-        m.analysis.time = int(timeout.Seconds())
+        m.analysis.time = int(m.settings.times[m.settings.timeIdx])
         m.analysis.words = m.typer.totalWords
         m.analysis.correct = m.typer.totalCorrect
         m.analysis.characters = m.typer.totalTyped
@@ -96,7 +90,7 @@ func (m MainModel) View() string {
     return output
 }
 
-func setup() {
+func setup() MainModel {
     // get common words from file
     file, _ := os.Open("common-words.txt")
     defer file.Close()
@@ -104,19 +98,24 @@ func setup() {
     for scanner.Scan() {
         COMMONWORDS = append(COMMONWORDS, scanner.Text())
     }
+    // initialize main model
+    s := NewSettingsModel()
+    ti := NewTimerModel(time.Second * time.Duration(s.times[s.timeIdx]))
+    ty := NewTyper()
+    a := NewAnalysisModel()
+    return MainModel{
+        timer: ti,
+        typer: ty,
+        analysis: a,
+        settings: s,
+        width: 120,
+        height: 8,
+    }
 }
 
 func main() {
     // run this function to initialize important shit
-    setup()
-    initialModel := MainModel{
-        timer: NewTimerModel(timeout),
-        typer: NewTyper(),
-        analysis: NewAnalysisModel(),
-        settings: NewSettingsModel(),
-        width: 120,
-        height: 8,
-    }
+    initialModel := setup()
     p := tea.NewProgram(initialModel, tea.WithAltScreen())
     if _, err := p.Run(); err != nil {
         fmt.Println("Error starting game:", err)
