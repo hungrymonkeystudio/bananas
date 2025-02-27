@@ -1,10 +1,11 @@
 package main
 
 import (
-    "time"
+	"strconv"
+	"time"
 
-    tea "github.com/charmbracelet/bubbletea"
-    "github.com/charmbracelet/bubbles/timer"
+	"github.com/charmbracelet/bubbles/timer"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 // custom wrapper around bubbbles timer
@@ -53,5 +54,6 @@ func (m TimerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m TimerModel) View() string {
-    return yellow.Render(m.timer.View())
+    secondsDuration := strconv.Itoa(int(m.timer.Timeout.Seconds()))
+    return yellow.Render(secondsDuration + "s")
 }

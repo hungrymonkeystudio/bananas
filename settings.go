@@ -8,7 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-const settingInstructions = "UP/DOWN/LEFT/RIGHT to move\nENTER to select"
+const settingInstructions = "UP/DOWN/LEFT/RIGHT to move\nENTER to select\nESC to close settings page"
 
 type SettingsModel struct {
     show bool;
@@ -54,9 +54,10 @@ func (m SettingsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
             if m.options[m.optionIdx] == "quit" {
                 return m, tea.Quit
             } else if m.options[m.optionIdx] == "restart" {
-                return m, nil
+                return m, func () tea.Msg { return m }
             } else if m.options[m.optionIdx] == "timer" {
                 m.activeTime = m.times[m.timeIdx]
+                return m, func() tea.Msg { return m }
             }
         }
     }

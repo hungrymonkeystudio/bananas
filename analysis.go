@@ -6,6 +6,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+const ANALYSIS_INSTRUCTIONS = "CTRL+C to exit\nENTER to retry"
+
 type AnalysisModel struct {
     time int // amount of time taken
     words int // number of correct words
@@ -33,6 +35,8 @@ func (am AnalysisModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
         switch msg.String() {
         case "ctrl+c":
             return am, tea.Quit
+        case "enter":
+            return am, func() tea.Msg { return am }
         }
     }
     return am, nil
@@ -43,5 +47,5 @@ func (am AnalysisModel) View() string {
     accuracy := float64(am.correct) / float64(am.characters) * 100
     wpmText := white.Render(fmt.Sprintf("wpm: %d", wpm))
     accuracyText := white.Render(fmt.Sprintf("acc: %.2f", accuracy))
-    return wpmText + "\n" + accuracyText 
+    return wpmText + "\n" + accuracyText + "\n\n" + instructions.Render(ANALYSIS_INSTRUCTIONS)
 }

@@ -7,6 +7,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+const TYPER_INSTRUCTIONS = "CTRL+C to quit program\nESC to open settings"
+
 const MAXLINES = 3
 // max characters per line is either 60
 // or if screen is smaller than do
@@ -222,6 +224,7 @@ func (tym TyperModel) View() string {
         }
         output += "\n"
     }
+    output += "\n" + instructions.Render(TYPER_INSTRUCTIONS)
     return output 
 }
 

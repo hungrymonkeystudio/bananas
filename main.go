@@ -40,6 +40,11 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
             return m, nil
         }
     case SettingsModel:
+        tea.Println("Settings Updated")
+        m.typer = NewTyper()
+        m.timer = NewTimerModel(time.Second*time.Duration(m.settings.activeTime))
+        m.settings.show = !m.settings.show
+    case AnalysisModel:
         m.typer = NewTyper()
         m.timer = NewTimerModel(time.Second*time.Duration(m.settings.activeTime))
     }
