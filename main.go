@@ -74,7 +74,7 @@ func (m MainModel) View() string {
     output += strings.Repeat("\n", paddingY)
     // left padding
     if (m.timer.done) {
-        m.analysis.time = int(m.settings.times[m.settings.timeIdx])
+        m.analysis.time = m.settings.activeTime
         m.analysis.words = m.typer.totalWords
         m.analysis.correct = m.typer.totalCorrect
         m.analysis.characters = m.typer.totalTyped
@@ -96,24 +96,6 @@ func (m MainModel) View() string {
     }
     return output
 }
-
-func (m MainModel) Restart() tea.Cmd {
-    return func() tea.Msg {
-        s := NewSettingsModel()
-        ti := NewTimerModel(time.Second * time.Duration(s.times[s.timeIdx]))
-        ty := NewTyper()
-        a := NewAnalysisModel()
-        m = MainModel{
-            timer: ti,
-            typer: ty,
-            analysis: a,
-            settings: s,
-            width: 120,
-            height: 8,
-        }
-        return ""
-    }
-} 
 
 func setup() MainModel {
     // get common words from file

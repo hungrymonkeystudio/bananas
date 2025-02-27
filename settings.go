@@ -4,6 +4,8 @@ package main
 
 import (
 	"strconv"
+    "os"
+    "bufio"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -20,7 +22,7 @@ type SettingsModel struct {
 }
 
 func NewSettingsModel() SettingsModel {
-    return SettingsModel{
+    s := SettingsModel{
         show: false,
         options: []string{"timer", "restart", "quit"},
         optionIdx: 0,
@@ -28,6 +30,8 @@ func NewSettingsModel() SettingsModel {
         timeIdx: 1,
         activeTime: 30,
     }
+    readSettings(&s)
+    return s
 }
 
 func (m SettingsModel) Init() tea.Cmd {
@@ -57,6 +61,7 @@ func (m SettingsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
                 return m, func () tea.Msg { return m }
             } else if m.options[m.optionIdx] == "timer" {
                 m.activeTime = m.times[m.timeIdx]
+                m.writeSettings()
                 return m, func() tea.Msg { return m }
             }
         }
@@ -112,4 +117,48 @@ func (m SettingsModel) View() string {
     output += "\n"
     output += "\n" + instructions.Render(settingInstructions)
     return output
+}
+
+func (m SettingsModel) writeSettings() {
+    // create file
+    file, err := os.Create("user_settings.json")
+	if err != nil {
+		return
+	}
+    defer file.Close()
+
+	// Write to the file
+	_, err = file.WriteString(strconv.Itoa(m.activeTime))
+	if err != nil {
+		return
+	}
+}
+
+func readSettings(m *SettingsModel) {
+    // read from settings file
+    file, err := os.Open("user_settings.json")
+    if err != nil {
+        return
+    }
+    defer file.Close()
+    scanner := bufio.NewScanner(file)
+    textVal := ""
+    for scanner.Scan() {
+        textVal = scanner.Text()
+    }
+    num, err := strconv.Atoi(textVal)
+    if err != nil {
+        return
+    }
+    // check that num matches at least 1 of the values in times
+    matches := false
+    for _, time := range m.times {
+        if time == num {
+            matches = true
+        }
+    }
+    if !matches {
+        return
+    }
+    m.activeTime = num
 }
