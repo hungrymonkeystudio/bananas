@@ -39,6 +39,9 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
             m.settings.show = !m.settings.show
             return m, nil
         }
+    case SettingsModel:
+        m.typer = NewTyper()
+        m.timer = NewTimerModel(time.Second*time.Duration(m.settings.activeTime))
     }
     // local updates that are dependent on which view is active
     if m.settings.show { // only update settings when settings show
@@ -49,14 +52,13 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
         updatedAnalysis, analysisCmd := m.analysis.Update(msg)
         m.analysis = updatedAnalysis.(AnalysisModel)
         return m, analysisCmd
-    } else if (m.timer.started) { // update timer and typer if timer has started
-        updatedTimer, timerCmd := m.timer.Update(msg)
-        m.timer = updatedTimer.(TimerModel)
-        updatedTyper, typerCmd := m.typer.Update(msg)
-        m.typer = updatedTyper.(TyperModel)
-        return m, tea.Batch(timerCmd, typerCmd)
     }
-    return m, nil
+    // otherwise update timer and typer
+    updatedTimer, timerCmd := m.timer.Update(msg)
+    m.timer = updatedTimer.(TimerModel)
+    updatedTyper, typerCmd := m.typer.Update(msg)
+    m.typer = updatedTyper.(TyperModel)
+    return m, tea.Batch(timerCmd, typerCmd)
 }
 
 func (m MainModel) View() string {
@@ -90,6 +92,24 @@ func (m MainModel) View() string {
     return output
 }
 
+func (m MainModel) Restart() tea.Cmd {
+    return func() tea.Msg {
+        s := NewSettingsModel()
+        ti := NewTimerModel(time.Second * time.Duration(s.times[s.timeIdx]))
+        ty := NewTyper()
+        a := NewAnalysisModel()
+        m = MainModel{
+            timer: ti,
+            typer: ty,
+            analysis: a,
+            settings: s,
+            width: 120,
+            height: 8,
+        }
+        return ""
+    }
+} 
+
 func setup() MainModel {
     // get common words from file
     file, _ := os.Open("common-words.txt")
@@ -100,7 +120,7 @@ func setup() MainModel {
     }
     // initialize main model
     s := NewSettingsModel()
-    ti := NewTimerModel(time.Second * time.Duration(s.times[s.timeIdx]))
+    ti := NewTimerModel(time.Second * time.Duration(s.activeTime))
     ty := NewTyper()
     a := NewAnalysisModel()
     return MainModel{
