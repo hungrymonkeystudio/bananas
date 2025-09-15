@@ -1,9 +1,12 @@
-package main
+package typer
 
 import (
+	colors "bananas/pkg/colors"
+	resourcepath "bananas/pkg/resourcepath"
+	"bufio"
 	"math/rand"
+	"os"
 	"strings"
-
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -15,6 +18,8 @@ const MAXLINES = 3
 // screen width - 16 (padding on each side)
 var MAXCHARPERLINE = 60
 
+var COMMONWORDS = []string{} 
+
 type TyperModel struct {
     // text related parameters
     lines [][]string
@@ -25,10 +30,20 @@ type TyperModel struct {
     charIdx int
     skips [][]int // should specify, line, word, and char idx
     // analytics
-    totalWords int
-    totalCorrect int
-    totalTyped int
+    TotalWords int
+    TotalCorrect int
+    TotalTyped int
 } 
+
+func loadWordsFromFile() {
+	basePath := resourcepath.GetResourcePath()
+    file, _ := os.Open(basePath+"/common-words.txt")
+    defer file.Close()
+    scanner := bufio.NewScanner(file)
+    for scanner.Scan() {
+        COMMONWORDS = append(COMMONWORDS, scanner.Text())
+    }
+}
 
 func NewTyper() TyperModel {
     // create MAXLINES number of text
@@ -50,13 +65,14 @@ func NewTyper() TyperModel {
         wordIdx: 0,
         charIdx: 0,
         skips: [][]int{},
-        totalWords: 0,
-        totalCorrect: 0,
-        totalTyped: 0,
+        TotalWords: 0,
+        TotalCorrect: 0,
+        TotalTyped: 0,
     }
 }
 
 func createLine() ([]string, []string, []int) {
+	loadWordsFromFile()
 	var result []string
     var colorResult []string
     var sizeResult []int
@@ -103,7 +119,7 @@ func (tym TyperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
             currWordSize := tym.wordSizes[tym.lineIdx][tym.wordIdx]
             if (tym.charIdx >= currWordSize && checkWordCorrect(currWordSize, tym.linesColor[tym.lineIdx][tym.wordIdx])) {
                 tym.skips = [][]int{}
-                tym.totalWords += 1
+                tym.TotalWords += 1
             } else {
                 tym.skips = append(tym.skips, []int{tym.lineIdx, tym.wordIdx, tym.charIdx})
             }
@@ -177,7 +193,7 @@ func (tym TyperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
                     tempRune := []rune(tym.linesColor[tym.lineIdx][tym.wordIdx])
                     tempRune[tym.charIdx] = 'w'
                     tym.linesColor[tym.lineIdx][tym.wordIdx] = string(tempRune)
-                    tym.totalCorrect += 1
+                    tym.TotalCorrect += 1
                 } else {
                     tempRune := []rune(tym.linesColor[tym.lineIdx][tym.wordIdx])
                     tempRune[tym.charIdx] = 'r'
@@ -185,7 +201,7 @@ func (tym TyperModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
                 }
             }
             tym.charIdx += 1
-            tym.totalTyped += 1
+            tym.TotalTyped += 1
         }
     }
     return tym, nil 
@@ -202,29 +218,29 @@ func (tym TyperModel) View() string {
                 letter := tym.lines[i][j][k]
                 if (k == tym.charIdx && i == tym.lineIdx && j == tym.wordIdx) {
                     cursorOnSpace = false 
-                    output += cursor.Render(string(letter))
+                    output += colors.Cursor.Render(string(letter))
                 } else {
                     switch color {
                     case 'r':
-                        output += red.Render(string(letter))
+                        output += colors.Red.Render(string(letter))
                     case 'g':
-                        output += gray.Render(string(letter))
+                        output += colors.Gray.Render(string(letter))
                     case 'w':
-                        output += white.Render(string(letter))
+                        output += colors.White.Render(string(letter))
                     default:
                         output += string(letter)
                     }
                 }
             }
             if (i == tym.lineIdx && j == tym.wordIdx && cursorOnSpace) {
-                output += cursor.Render(" ")
+                output += colors.Cursor.Render(" ")
             } else {
                 output += " "
             }
         }
         output += "\n"
     }
-    output += "\n" + instructions.Render(TYPER_INSTRUCTIONS)
+    output += "\n" + colors.Instructions.Render(TYPER_INSTRUCTIONS)
     return output 
 }
 

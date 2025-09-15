@@ -1,34 +1,36 @@
 // setting screen for bananas
 // core functionality: change time control
-package main
+
+package settings 
 
 import (
 	"strconv"
     "os"
     "bufio"
-
+	resourcepath "bananas/pkg/resourcepath"
+	colors "bananas/pkg/colors"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 const settingInstructions = "UP/DOWN/LEFT/RIGHT to move\nENTER to select\nESC to close settings page"
 
 type SettingsModel struct {
-    show bool;
+    Show bool;
     options []string;
     optionIdx int;
     times []int;
     timeIdx int;
-    activeTime int;
+    ActiveTime int;
 }
 
 func NewSettingsModel() SettingsModel {
     s := SettingsModel{
-        show: false,
+        Show: false,
         options: []string{"timer", "restart", "quit"},
         optionIdx: 0,
         times: []int{15, 30, 60, 120},
         timeIdx: 1,
-        activeTime: 30,
+        ActiveTime: 30,
     }
     readSettings(&s)
     return s
@@ -60,7 +62,7 @@ func (m SettingsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
             } else if m.options[m.optionIdx] == "restart" {
                 return m, func () tea.Msg { return m }
             } else if m.options[m.optionIdx] == "timer" {
-                m.activeTime = m.times[m.timeIdx]
+                m.ActiveTime = m.times[m.timeIdx]
                 m.writeSettings()
                 return m, func() tea.Msg { return m }
             }
@@ -70,52 +72,52 @@ func (m SettingsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m SettingsModel) View() string {
-    output := yellow.Render("Settings Page") + "\n"
+    output := colors.Yellow.Render("Settings Page") + "\n"
     if m.options[m.optionIdx] == "timer" {
-        output += white.Render("timer: ")
+        output += colors.White.Render("timer: ")
         for timeIdx, times := range m.times {
             if timeIdx == m.timeIdx {
-                if m.times[m.timeIdx] == m.activeTime {
-                    output += white.Underline(true).Render(strconv.Itoa(times)) + " "
+                if m.times[m.timeIdx] == m.ActiveTime {
+                    output += colors.White.Underline(true).Render(strconv.Itoa(times)) + " "
                 } else {
-                    output += gray.Underline(true).Render(strconv.Itoa(times)) + " "
+                    output += colors.Gray.Underline(true).Render(strconv.Itoa(times)) + " "
                 }
             } else {
-                if m.times[timeIdx] == m.activeTime {
-                    output += white.Render(strconv.Itoa(times)) + " "
+                if m.times[timeIdx] == m.ActiveTime {
+                    output += colors.White.Render(strconv.Itoa(times)) + " "
                 } else {
-                    output += gray.Render(strconv.Itoa(times)) + " "
+                    output += colors.Gray.Render(strconv.Itoa(times)) + " "
                 }
             }
         }
     } else {
-        output += gray.Render("timer: ")
+        output += colors.Gray.Render("timer: ")
         for timeIdx, times := range m.times {
             if timeIdx == m.timeIdx {
-                if m.times[m.timeIdx] == m.activeTime {
-                    output += gray.Underline(true).Render(strconv.Itoa(times)) + " "
+                if m.times[m.timeIdx] == m.ActiveTime {
+                    output += colors.Gray.Underline(true).Render(strconv.Itoa(times)) + " "
                 } else {
-                    output += gray.Render(strconv.Itoa(times)) + " "
+                    output += colors.Gray.Render(strconv.Itoa(times)) + " "
                 }
             } else {
-                output += gray.Render(strconv.Itoa(times)) + " "
+                output += colors.Gray.Render(strconv.Itoa(times)) + " "
             }
         }
     }
     output += "\n"
     if m.options[m.optionIdx] == "restart" {
-        output += white.Render("restart")
+        output += colors.White.Render("restart")
     } else {
-        output += gray.Render("restart")
+        output += colors.Gray.Render("restart")
     }
     output += "\n"
     if m.options[m.optionIdx] == "quit" {
-        output += white.Render("quit")
+        output += colors.White.Render("quit")
     } else {
-        output += gray.Render("quit")
+        output += colors.Gray.Render("quit")
     }
     output += "\n"
-    output += "\n" + instructions.Render(settingInstructions)
+    output += "\n" + colors.Instructions.Render(settingInstructions)
     return output
 }
 
@@ -128,7 +130,7 @@ func (m SettingsModel) writeSettings() {
     defer file.Close()
 
 	// Write to the file
-	_, err = file.WriteString(strconv.Itoa(m.activeTime))
+	_, err = file.WriteString(strconv.Itoa(m.ActiveTime))
 	if err != nil {
 		return
 	}
@@ -136,7 +138,8 @@ func (m SettingsModel) writeSettings() {
 
 func readSettings(m *SettingsModel) {
     // read from settings file
-    file, err := os.Open("user_settings.json")
+	basePath := resourcepath.GetResourcePath()
+    file, err := os.Open(basePath+"/settings.json")
     if err != nil {
         return
     }
@@ -160,5 +163,5 @@ func readSettings(m *SettingsModel) {
     if !matches {
         return
     }
-    m.activeTime = num
+    m.ActiveTime = num
 }

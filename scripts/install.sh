@@ -53,6 +53,7 @@ if [[ "$INSTALL_MODE" == "local" ]]; then
     echo "Resources in $LOCAL_SHARE"
 else
     echo "===Installing globally (requires sudo)==="
+    echo "===Installing globally (requires sudo)==="
     sudo mkdir -p "$GLOBAL_BIN" "$GLOBAL_SHARE"
     sudo mv "$APP_NAME" "$GLOBAL_BIN/"
     if [[ -d "$RESOURCE_DIR" ]]; then

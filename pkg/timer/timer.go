@@ -1,26 +1,26 @@
-package main
+package timer 
 
 import (
 	"strconv"
 	"time"
-
-	"github.com/charmbracelet/bubbles/timer"
+	colors "bananas/pkg/colors"
+	bubbleTimer "github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 // custom wrapper around bubbbles timer
 
 type TimerModel struct {
-    timer timer.Model
+    timer bubbleTimer.Model
     started bool
-    done bool
+    Done bool
 }
 
 func NewTimerModel(startTime time.Duration) TimerModel {
     return TimerModel{
-        timer: timer.NewWithInterval(startTime, time.Second),
+        timer: bubbleTimer.NewWithInterval(startTime, time.Second),
         started: false,
-        done: false,
+        Done: false,
     }
 }
 
@@ -30,16 +30,16 @@ func (m TimerModel) Init() tea.Cmd {
 
 func (m TimerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
     switch msg := msg.(type) {
-    case timer.TickMsg:
+    case bubbleTimer.TickMsg:
         var cmd tea.Cmd
         m.timer, cmd = m.timer.Update(msg)
         return m, cmd
-    case timer.StartStopMsg:
+    case bubbleTimer.StartStopMsg:
         var cmd tea.Cmd
         m.timer, cmd = m.timer.Update(msg)
         return m, cmd
-    case timer.TimeoutMsg:
-        m.done = true
+    case bubbleTimer.TimeoutMsg:
+        m.Done = true
         return m, nil
     case tea.KeyMsg:
         switch msg.String() {
@@ -55,5 +55,5 @@ func (m TimerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m TimerModel) View() string {
     secondsDuration := strconv.Itoa(int(m.timer.Timeout.Seconds()))
-    return yellow.Render(secondsDuration + "s")
+    return colors.Yellow.Render(secondsDuration + "s")
 }

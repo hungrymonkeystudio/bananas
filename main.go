@@ -1,24 +1,22 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
-	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
-
+	settings "bananas/pkg/settings"
+	timer "bananas/pkg/timer"
+	typer "bananas/pkg/typer"
+	analysis "bananas/pkg/analysis"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-var COMMONWORDS []string
-
 type MainModel struct {
-    settings SettingsModel
-    timer TimerModel 
-    typer TyperModel
-    analysis AnalysisModel
+    settings settings.SettingsModel
+    timer timer.TimerModel 
+    typer typer.TyperModel
+    analysis analysis.AnalysisModel
     width int
     height int
 }
@@ -38,53 +36,53 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
         case "ctrl+c":
             return m, tea.Quit
         case "esc":
-            m.settings.show = !m.settings.show
+            m.settings.Show = !m.settings.Show
             return m, nil
         }
-    case SettingsModel:
+    case settings.SettingsModel:
         tea.Println("Settings Updated")
-        m.typer = NewTyper()
-        m.timer = NewTimerModel(time.Second*time.Duration(m.settings.activeTime))
-        m.settings.show = !m.settings.show
-    case AnalysisModel:
-        m.typer = NewTyper()
-        m.timer = NewTimerModel(time.Second*time.Duration(m.settings.activeTime))
+        m.typer = typer.NewTyper()
+        m.timer = timer.NewTimerModel(time.Second*time.Duration(m.settings.ActiveTime))
+        m.settings.Show = !m.settings.Show
+    case analysis.AnalysisModel:
+        m.typer = typer.NewTyper()
+        m.timer = timer.NewTimerModel(time.Second*time.Duration(m.settings.ActiveTime))
     }
     // local updates that are dependent on which view is active
-    if m.settings.show { // only update settings when settings show
+    if m.settings.Show { // only update settings when settings show
         updatedSettings, settingsCmd := m.settings.Update(msg)
-        m.settings = updatedSettings.(SettingsModel)
+        m.settings = updatedSettings.(settings.SettingsModel)
         return m, settingsCmd
-    } else if (m.timer.done) { // only update analysis when timer is done
+    } else if (m.timer.Done) { // only update analysis when timer is done
         updatedAnalysis, analysisCmd := m.analysis.Update(msg)
-        m.analysis = updatedAnalysis.(AnalysisModel)
+        m.analysis = updatedAnalysis.(analysis.AnalysisModel)
         return m, analysisCmd
     }
     // otherwise update timer and typer
     updatedTimer, timerCmd := m.timer.Update(msg)
-    m.timer = updatedTimer.(TimerModel)
+    m.timer = updatedTimer.(timer.TimerModel)
     updatedTyper, typerCmd := m.typer.Update(msg)
-    m.typer = updatedTyper.(TyperModel)
+    m.typer = updatedTyper.(typer.TyperModel)
     return m, tea.Batch(timerCmd, typerCmd)
 }
 
 func (m MainModel) View() string {
     output := ""
-    paddingY := (m.height - MAXLINES+1) / 2
-	paddingX := (m.width - MAXCHARPERLINE) / 2
+    paddingY := (m.height - typer.MAXLINES+1) / 2
+	paddingX := (m.width - typer.MAXCHARPERLINE) / 2
     // top padding
     output += strings.Repeat("\n", paddingY)
     // left padding
-    if (m.timer.done) {
-        m.analysis.time = m.settings.activeTime
-        m.analysis.words = m.typer.totalWords
-        m.analysis.correct = m.typer.totalCorrect
-        m.analysis.characters = m.typer.totalTyped
+    if (m.timer.Done) {
+        m.analysis.Time = m.settings.ActiveTime
+        m.analysis.Words = m.typer.TotalWords
+        m.analysis.Correct = m.typer.TotalCorrect
+        m.analysis.Characters = m.typer.TotalTyped
         outputLines := strings.Split(m.analysis.View(), "\n")
         for i := 0; i < len(outputLines) ; i++ {
             output += strings.Repeat(" ", paddingX) + outputLines[i] + "\n"
         }
-    } else if m.settings.show {
+    } else if m.settings.Show {
         outputLines := strings.Split(m.settings.View(), "\n")
         for _, line := range outputLines {
             output += strings.Repeat(" ", paddingX) + line + "\n"
@@ -100,23 +98,11 @@ func (m MainModel) View() string {
 }
 
 func setup() MainModel {
-    // get common words from file
-	// get absolute path and append filename (common-words.txt)
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {	
-		panic("No caller information")
-	}
-    file, _ := os.Open(filepath.Dir(filename) + "/common-words.txt")
-    defer file.Close()
-    scanner := bufio.NewScanner(file)
-    for scanner.Scan() {
-        COMMONWORDS = append(COMMONWORDS, scanner.Text())
-    }
     // initialize main model
-    s := NewSettingsModel()
-    ti := NewTimerModel(time.Second * time.Duration(s.activeTime))
-    ty := NewTyper()
-    a := NewAnalysisModel()
+    s := settings.NewSettingsModel()
+    ti := timer.NewTimerModel(time.Second * time.Duration(s.ActiveTime))
+    ty := typer.NewTyper()
+    a := analysis.NewAnalysisModel()
     return MainModel{
         timer: ti,
         typer: ty,
