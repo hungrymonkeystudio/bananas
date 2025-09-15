@@ -35,7 +35,8 @@ if [[ "$VERSION" != "1.24.6" ]]; then
 fi
 
 echo "===Building executable==="
-go build . -o "$PARENT_DIR/$APP_NAME"
+cd $PARENT_DIR
+go build . 
 
 if [[ "$INSTALL_MODE" == "local" ]]; then
     echo "===Installing locally==="
@@ -58,6 +59,7 @@ else
     sudo mv "$APP_NAME" "$GLOBAL_BIN/"
     if [[ -d "$RESOURCE_DIR" ]]; then
         cp -r "$RESOURCE_DIR"/* "$GLOBAL_SHARE/"
+    fi
     echo "Installed $APP_NAME to $GLOBAL_BIN"
     echo "Resources in $GLOBAL_SHARE"
 fi

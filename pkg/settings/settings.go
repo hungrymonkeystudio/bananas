@@ -123,7 +123,8 @@ func (m SettingsModel) View() string {
 
 func (m SettingsModel) writeSettings() {
     // create file
-    file, err := os.Create("user_settings.json")
+	basePath := resourcepath.GetResourcePath()
+    file, err := os.Create(basePath+"/settings.json")
 	if err != nil {
 		return
 	}
