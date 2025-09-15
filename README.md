@@ -4,31 +4,24 @@ monkeytype in your terminal
 
 **for linux environments**
 
-## Installation
+## Install 
 
-### Build from scratch
-
-1. Clone repository
+### Install Script
 
 ```bash
-https://github.com/hungrymonkeystudio/bananas.git
+git clone https://github.com/hungrymonkeystudio/bananas
+cd scripts
+chmod +x install.sh
+./install.sh
 ```
 
-2. Build project with Go version 1.24
+## Uninstall
+
+### Uninstall Script
 
 ```bash
-go build .
+git clone https://github.com/hungrymonkeystudio/bananas
+cd scripts
+chmod +x uninstall.sh
+./uninstall.sh
 ```
-
-3. Run make install
-
-```bash
-make install
-```
-
-4. Run make uninstall to remove program
-
-```bash
-make uninstall
-```
-
