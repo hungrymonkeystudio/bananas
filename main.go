@@ -1,9 +1,11 @@
 package main
 
 import (
-    "bufio"
+	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -99,7 +101,12 @@ func (m MainModel) View() string {
 
 func setup() MainModel {
     // get common words from file
-    file, _ := os.Open("common-words.txt")
+	// get absolute path and append filename (common-words.txt)
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {	
+		panic("No caller information")
+	}
+    file, _ := os.Open(filepath.Dir(filename) + "/common-words.txt")
     defer file.Close()
     scanner := bufio.NewScanner(file)
     for scanner.Scan() {
