@@ -1,14 +1,10 @@
-// setting screen for github.com/WarrenWu4/bananatype
+// settings screen for bananatype
 // core functionality: change time control
 
 package settings
 
 import (
-	colors "github.com/WarrenWu4/bananatype/pkg/colors"
-	resourcepath "github.com/WarrenWu4/bananatype/pkg/resourcepath"
-	"encoding/json"
-	"os"
-	"slices"
+	"github.com/WarrenWu4/bananatype/internal/foundation/theme"
 	"strconv"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -95,130 +91,75 @@ func (m SettingsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m SettingsModel) View() string {
-	output := colors.Yellow.Render("Settings") + "\n"
+	output := theme.Yellow.Render("Settings") + "\n"
 	if m.options[m.optionIdx] == "timer" {
-		output += colors.White.Render("timer: ")
+		output += theme.White.Render("timer: ")
 		for timeIdx, times := range m.times {
 			if timeIdx == m.timeIdx {
 				if m.times[m.timeIdx] == m.ActiveTime && m.ActiveTyperMode == "timer" {
-					output += colors.White.Underline(true).Render(strconv.Itoa(times)) + " "
+					output += theme.White.Underline(true).Render(strconv.Itoa(times)) + " "
 				} else {
-					output += colors.Gray.Underline(true).Render(strconv.Itoa(times)) + " "
+					output += theme.Gray.Underline(true).Render(strconv.Itoa(times)) + " "
 				}
 			} else {
 				if m.times[timeIdx] == m.ActiveTime && m.ActiveTyperMode == "timer" {
-					output += colors.White.Render(strconv.Itoa(times)) + " "
+					output += theme.White.Render(strconv.Itoa(times)) + " "
 				} else {
-					output += colors.Gray.Render(strconv.Itoa(times)) + " "
+					output += theme.Gray.Render(strconv.Itoa(times)) + " "
 				}
 			}
 		}
 	} else {
-		output += colors.Gray.Render("timer: ")
+		output += theme.Gray.Render("timer: ")
 		for timeIdx, times := range m.times {
 			if m.times[timeIdx] == m.ActiveTime && m.ActiveTyperMode == "timer" {
-				output += colors.White.Render(strconv.Itoa(times)) + " "
+				output += theme.White.Render(strconv.Itoa(times)) + " "
 			} else {
-				output += colors.Gray.Render(strconv.Itoa(times)) + " "
+				output += theme.Gray.Render(strconv.Itoa(times)) + " "
 			}
 		}
 	}
 	output += "\n"
 	if m.options[m.optionIdx] == "words" {
-		output += colors.White.Render("words: ")
+		output += theme.White.Render("words: ")
 		for wordIdx, word := range m.words {
 			if wordIdx == m.wordIdx {
 				if m.words[m.wordIdx] == m.ActiveWords && m.ActiveTyperMode == "words" {
-					output += colors.White.Underline(true).Render(strconv.Itoa(word)) + " "
+					output += theme.White.Underline(true).Render(strconv.Itoa(word)) + " "
 				} else {
-					output += colors.Gray.Underline(true).Render(strconv.Itoa(word)) + " "
+					output += theme.Gray.Underline(true).Render(strconv.Itoa(word)) + " "
 				}
 			} else {
 				if m.words[wordIdx] == m.ActiveWords && m.ActiveTyperMode == "words" {
-					output += colors.White.Render(strconv.Itoa(word)) + " "
+					output += theme.White.Render(strconv.Itoa(word)) + " "
 				} else {
-					output += colors.Gray.Render(strconv.Itoa(word)) + " "
+					output += theme.Gray.Render(strconv.Itoa(word)) + " "
 				}
 			}
 		}
 	} else {
-		output += colors.Gray.Render("words: ")
+		output += theme.Gray.Render("words: ")
 		for wordIdx, word := range m.words {
 			if m.words[wordIdx] == m.ActiveWords && m.ActiveTyperMode == "words" {
-				output += colors.White.Render(strconv.Itoa(word)) + " "
+				output += theme.White.Render(strconv.Itoa(word)) + " "
 			} else {
-				output += colors.Gray.Render(strconv.Itoa(word)) + " "
+				output += theme.Gray.Render(strconv.Itoa(word)) + " "
 			}
 		}
 	}
 	output += "\n"
 	if m.options[m.optionIdx] == "restart" {
-		output += colors.White.Render("restart")
+		output += theme.White.Render("restart")
 	} else {
-		output += colors.Gray.Render("restart")
+		output += theme.Gray.Render("restart")
 	}
 	output += "\n"
 	if m.options[m.optionIdx] == "quit" {
-		output += colors.White.Render("quit")
+		output += theme.White.Render("quit")
 	} else {
-		output += colors.Gray.Render("quit")
+		output += theme.Gray.Render("quit")
 	}
 	output += "\n"
-	output += "\n" + colors.Instructions.Render(settingInstructions)
+	output += "\n" + theme.Instructions.Render(settingInstructions)
 	return output
-}
-
-func (m SettingsModel) writeSettings() {
-	basePath := resourcepath.GetResourcePath()
-	file, err := os.Create(basePath + "/settings.json")
-	if err != nil {
-		return
-	}
-	defer file.Close()
-
-	data := map[string]any {
-		"activeTime":      m.ActiveTime,
-		"activeWords":     m.ActiveWords,
-		"activeTyperMode": m.ActiveTyperMode,
-	}
-
-	encoder := json.NewEncoder(file)
-	encoder.SetIndent("", "  ")
-	_ = encoder.Encode(data)
-}
-
-func readSettings(m *SettingsModel) {
-	basePath := resourcepath.GetResourcePath()
-	file, err := os.Open(basePath + "/settings.json")
-	if err != nil {
-		return
-	}
-	defer file.Close()
-
-	var data struct {
-		ActiveTime      int    `json:"activeTime"`
-		ActiveWords     int    `json:"activeWords"`
-		ActiveTyperMode string `json:"activeTyperMode"`
-	}
-
-	if err := json.NewDecoder(file).Decode(&data); err != nil {
-		return
-	}
-
-	// read and validate ActiveTime and timeIdx 
-	if slices.Contains(m.times, data.ActiveTime) {
-		m.ActiveTime = data.ActiveTime
-		m.timeIdx = slices.Index(m.times, data.ActiveTime)
-	}
-
-	//  read and validate ActiveWords wordIdx
-	if slices.Contains(m.words, data.ActiveWords) {
-		m.ActiveWords = data.ActiveWords
-		m.wordIdx = slices.Index(m.words, data.ActiveWords)
-	}
-
-	// read and validate ActiveTyperMode
-	if data.ActiveTyperMode == "timer" || data.ActiveTyperMode == "words" {
-		m.ActiveTyperMode = data.ActiveTyperMode
-	}
 }

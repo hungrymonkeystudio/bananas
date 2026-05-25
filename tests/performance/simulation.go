@@ -3,7 +3,7 @@
 package performance
 
 import (
-	coordinator "github.com/WarrenWu4/bananatype/pkg/coordinator"
+	"github.com/WarrenWu4/bananatype/internal/session"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -18,7 +18,7 @@ import (
 var export = flag.Bool("export", false, "save results to a file")
 
 type TestTypingModel struct {
-	main      coordinator.MainModel
+	main      session.Model
 	frameChan chan bool // Channel to signal a frame update
 }
 
@@ -35,7 +35,7 @@ func (m TestTypingModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 	updatedMain, mainCmd := m.main.Update(msg)
-	m.main = updatedMain.(coordinator.MainModel)
+	m.main = updatedMain.(session.Model)
 	return m, tea.Batch(mainCmd)
 }
 
@@ -138,7 +138,6 @@ func exportData(data []DataPoint, collector Collector) {
 	jsonData, err := json.MarshalIndent(exportObj, "", "  ")
 	if err == nil {
 		_ = os.MkdirAll("test_results", 0755)
-		// Use the Title in the filename for easier identification
 		filename := fmt.Sprintf("%s_%d.json", collector.Name(), time.Now().Unix())
 		filePath := filepath.Join("test_results", filename)
 		_ = os.WriteFile(filePath, jsonData, 0644)
@@ -147,17 +146,17 @@ func exportData(data []DataPoint, collector Collector) {
 
 func runTypingTest(wpm int, accuracy float64, collector Collector) []DataPoint {
 	testTypingModel := TestTypingModel{
-		main:      coordinator.NewMainModel(),
-		frameChan: make(chan bool, 100), // Buffered channel to avoid blocking
+		main:      session.New(),
+		frameChan: make(chan bool, 100),
 	}
-	delayMs := int(60000 / (wpm * 5)) // 5 chars per word
+	delayMs := int(60000 / (wpm * 5))
 	inputs := []string{}
-	for _, line := range testTypingModel.main.GetTyper().GetLines() {
+	for _, line := range testTypingModel.main.GetTyping().GetLines() {
 		for _, word := range line {
 			for _, char := range word {
 				inputs = append(inputs, string(char))
 			}
-			inputs = append(inputs, " ") // space after each word
+			inputs = append(inputs, " ")
 		}
 	}
 	return simulate(inputs, delayMs, testTypingModel, collector)

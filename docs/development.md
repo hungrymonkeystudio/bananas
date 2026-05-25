@@ -48,3 +48,37 @@ The application transitions through several key states during a typing test:
 - **Go Conventions:** Adhere to standard Go formatting (`gofmt`).
 - **Minimal Dependencies:** Avoid adding external libraries unless necessary. `bananas` aims to be lightweight.
 - **Clean UI:** Ensure any UI changes maintain the minimal aesthetic.
+
+## Component Diagram
+
+```
++-----------------------------------------------------------+
+|                        main.go                            |
+|              (entry point, build config)                   |
++----------------------------+------------------------------+
+                             |
+                             v
++-----------------------------------------------------------+
+|              internal/session (Model)                      |
+|     state machine: typing <-> settings -> results         |
+|     owns: timer, progress tracking, transitions           |
++----------+-----------------+------------------------------+
+           |                 |                 |
+           v                 v                 v
++----------------+  +----------------+  +----------------+
+| ui/typing      |  | ui/settings    |  | ui/results     |
+|                |  |                |  |                |
+| word gen       |  | UI + controls  |  | WPM + accuracy |
+| input handling |  | JSON persist   |  | retry flow     |
+| rendering      |  |                |  |                |
++----------------+  +----------------+  +----------------+
+           |                 |
+           v                 v
++-----------------------------------------------------------+
+|                   foundation/                              |
+|  theme (styles)  |  logger (file log)  |  paths (resolve) |
++-----------------------------------------------------------+
+```
+
+Dependency rule: each layer only imports from layers below it.
+

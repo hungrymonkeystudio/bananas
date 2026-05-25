@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/WarrenWu4/bananatype/pkg/coordinator"
-	logger "github.com/WarrenWu4/bananatype/pkg/logger"
 	"fmt"
 	"os"
 
+	"github.com/WarrenWu4/bananatype/internal/foundation/logger"
+	"github.com/WarrenWu4/bananatype/internal/session"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -22,8 +22,7 @@ func main() {
 		logger.InitLogger(os.Getenv("HOME") + "/.local/state/banantype/log.txt")
 	}
 	os.OpenFile(settingsPath, os.O_APPEND|os.O_CREATE, 0644)
-	// run this function to initialize important shit
-	initialModel := coordinator.NewMainModel()
+	initialModel := session.New()
 	p := tea.NewProgram(initialModel, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Println("Error starting game:", err)

@@ -1,40 +1,41 @@
-package unit
+package results_test
 
 import (
-	"github.com/WarrenWu4/bananatype/pkg/analysis"
 	"strings"
 	"testing"
+
+	"github.com/WarrenWu4/bananatype/internal/ui/results"
 )
 
-func TestAnalysisCalculations(t *testing.T) {
-	am := analysis.AnalysisModel{
+func TestResultsCalculations(t *testing.T) {
+	rm := results.ResultsModel{
 		Time:       60,
 		Words:      60,
 		Correct:    300,
 		Characters: 300,
 	}
-	view := am.View()
+	view := rm.View()
 	if !strings.Contains(view, "wpm: 60") {
 		t.Errorf("Expected view to contain 'wpm: 60', got: %s", view)
 	}
 	if !strings.Contains(view, "acc: 100.00") {
 		t.Errorf("Expected view to contain 'acc: 100.00', got: %s", view)
 	}
-	amZero := analysis.AnalysisModel{
+	rmZero := results.ResultsModel{
 		Time:  0,
 		Words: 10,
 	}
-	viewZero := amZero.View()
+	viewZero := rmZero.View()
 	if !strings.Contains(viewZero, "wpm: 0") {
 		t.Errorf("Expected wpm: 0 for zero time, got: %s", viewZero)
 	}
-	amPartial := analysis.AnalysisModel{
+	rmPartial := results.ResultsModel{
 		Time:       60,
 		Words:      50,
 		Correct:    250,
 		Characters: 300,
 	}
-	viewPartial := amPartial.View()
+	viewPartial := rmPartial.View()
 	if !strings.Contains(viewPartial, "acc: 83.33") {
 		t.Errorf("Expected accuracy to be 83.33, got: %s", viewPartial)
 	}
